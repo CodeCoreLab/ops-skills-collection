@@ -1,0 +1,215 @@
+{
+  "package": "it-ops-expert-team",
+  "displayName": {
+    "en": "IT Operations Expert Team",
+    "zh": "IT运维专家团"
+  },
+  "description": {
+    "en": "Multi-role SRE team specializing in IT system stability, performance optimization, and intelligent operations, covering full-stack operations from infrastructure to application.",
+    "zh": "专注IT系统高可用保障，覆盖故障应急响应、全链路性能优化、智能运维与自动化全栈能力。"
+  },
+  "version": "1.0.0",
+  "exportedFrom": "WorkBuddy expert plugin (sec-ops-expert-team)",
+  "exportedAt": "2026-07-28",
+  "tags": [
+    {
+      "en": "IT System Ops & Stability",
+      "zh": "IT系统运维与稳定性保障"
+    },
+    {
+      "en": "SRE & Performance Optimization",
+      "zh": "SRE与性能优化"
+    },
+    {
+      "en": "Automation & Observability",
+      "zh": "自动化运维与可观测性"
+    }
+  ],
+  "quickPrompts": [
+    {
+      "zh": "核心业务系统出现响应超时，如何定位？",
+      "en": "Core business system response timeout, how to diagnose?"
+    },
+    {
+      "zh": "分析最近一次系统延迟的根本原因",
+      "en": "Analyze the root cause of recent system latency"
+    },
+    {
+      "zh": "对IT系统进行全量健康检查",
+      "en": "Conduct a full health check on our IT systems"
+    }
+  ],
+  "leadAgent": "sec-ops-lead",
+  "memberCount": 13,
+  "members": [
+    {
+      "id": "app-ops-engineer",
+      "displayName": {
+        "en": "App Guardian",
+        "zh": "🛠️ 应用运维工程师 周旭辉"
+      },
+      "profession": "应用运维工程师",
+      "role": "member",
+      "avatar": "avatars/app-ops-engineer.png",
+      "description": "AppOps Engineer responsible for full lifecycle management of core business applications, including deployment, configuration, grayscale release, and health monitoring.",
+      "promptFile": "agents/app-ops-engineer.md",
+      "plainPromptFile": "agents/app-ops-engineer.prompt.txt"
+    },
+    {
+      "id": "code-reviewer",
+      "displayName": {
+        "en": "Code Auditor",
+        "zh": "🔍 代码审查师 冯欣"
+      },
+      "profession": "代码审查师",
+      "role": "member",
+      "avatar": "avatars/code-reviewer.png",
+      "description": "Code Auditor specializing in security audit and logic validation for enterprise IT systems. Activates when user needs code-level diagnosis, security vulnerability checks, or concurrency risk analysis.",
+      "promptFile": "agents/code-reviewer.md",
+      "plainPromptFile": "agents/code-reviewer.prompt.txt"
+    },
+    {
+      "id": "data-analyst",
+      "displayName": {
+        "en": "Data Insight",
+        "zh": "📊 数据分析报告师 李坚明"
+      },
+      "profession": "数据分析报告师",
+      "role": "member",
+      "avatar": "avatars/data-analyst.png",
+      "description": "Data Analyst specializing in monitoring visualization and root cause quantification for enterprise IT systems. Activates when user needs trend analysis, latency heatmaps, or capacity forecasting.",
+      "promptFile": "agents/data-analyst.md",
+      "plainPromptFile": "agents/data-analyst.prompt.txt"
+    },
+    {
+      "id": "devops-engineer",
+      "displayName": {
+        "en": "Pipeline Architect",
+        "zh": "🤖 自动化与DevOps工程师 邓亚平"
+      },
+      "profession": "自动化与DevOps工程师",
+      "role": "member",
+      "avatar": "avatars/devops-engineer.png",
+      "description": "DevOps Engineer specializing in CI/CD pipeline construction, IaC (Terraform/Ansible), GitOps, and DORA metrics tracking for enterprise IT systems.",
+      "promptFile": "agents/devops-engineer.md",
+      "plainPromptFile": "agents/devops-engineer.prompt.txt"
+    },
+    {
+      "id": "infra-engineer",
+      "displayName": {
+        "en": "Infra Builder",
+        "zh": "💾 系统/基础设施工程师 王威"
+      },
+      "profession": "系统/基础设施工程师",
+      "role": "member",
+      "avatar": "avatars/infra-engineer.png",
+      "description": "Infrastructure Engineer specializing in physical servers, virtualization, container platforms, OS kernel tuning, NUMA optimization, and resource cost management.",
+      "promptFile": "agents/infra-engineer.md",
+      "plainPromptFile": "agents/infra-engineer.prompt.txt"
+    },
+    {
+      "id": "observability-engineer",
+      "displayName": {
+        "en": "System Seer",
+        "zh": "👁️ 监控与可观测性工程师 马欣"
+      },
+      "profession": "监控与可观测性工程师",
+      "role": "member",
+      "avatar": "avatars/observability-engineer.png",
+      "description": "Observability Engineer specializing in unified observability platforms (logs/metrics/traces), intelligent alerting, flame graph analysis, and root cause identification.",
+      "promptFile": "agents/observability-engineer.md",
+      "plainPromptFile": "agents/observability-engineer.prompt.txt"
+    },
+    {
+      "id": "platform-engineer",
+      "displayName": {
+        "en": "Platform Engineer",
+        "zh": "🛡️ 平台运维工程师 周剑"
+      },
+      "profession": "平台运维工程师",
+      "role": "member",
+      "avatar": "avatars/platform-engineer.png",
+      "description": "Platform Engineer specializing in K8s, middleware, CI/CD and IaC for enterprise IT systems. Activates when user needs infrastructure diagnosis, cluster management, or automation support.",
+      "promptFile": "agents/platform-engineer.md",
+      "plainPromptFile": "agents/platform-engineer.prompt.txt"
+    },
+    {
+      "id": "qa-expert",
+      "displayName": {
+        "en": "QA Master",
+        "zh": "🎯 测试专家"
+      },
+      "profession": "测试专家",
+      "role": "member",
+      "avatar": "avatars/qa-expert.png",
+      "description": "QA Master specializing in extreme scenario design and test automation for enterprise IT systems. Activates when user needs test case design, regression planning, or production environment drill support.",
+      "promptFile": "agents/qa-expert.md",
+      "plainPromptFile": "agents/qa-expert.prompt.txt"
+    },
+    {
+      "id": "sec-ops-lead",
+      "displayName": {
+        "en": "On-Call Lead",
+        "zh": "👮 群组经理主管 王金刚"
+      },
+      "profession": "群组经理主管",
+      "role": "lead",
+      "avatar": "avatars/sec-ops-lead.png",
+      "description": "Lead operator for IT system incidents. Activates when user reports a P0-P4 fault, performance issue, or operational question related to core business systems.",
+      "promptFile": "agents/sec-ops-lead.md",
+      "plainPromptFile": "agents/sec-ops-lead.prompt.txt"
+    },
+    {
+      "id": "senior-dev",
+      "displayName": {
+        "en": "Senior Fullstack",
+        "zh": "💻 高级开发工程师 潘杰彬"
+      },
+      "profession": "高级开发工程师",
+      "role": "member",
+      "avatar": "avatars/senior-dev.png",
+      "description": "Senior Fullstack Engineer specializing in Java/Go/Python/Vue/React for enterprise IT systems. Activates when user needs full-stack diagnosis, code-level troubleshooting, or architecture-to-code translation.",
+      "promptFile": "agents/senior-dev.md",
+      "plainPromptFile": "agents/senior-dev.prompt.txt"
+    },
+    {
+      "id": "sre-architect",
+      "displayName": {
+        "en": "SRE Architect",
+        "zh": "⚡ SRE架构师 林华"
+      },
+      "profession": "SRE架构师",
+      "role": "member",
+      "avatar": "avatars/sre-architect.png",
+      "description": "SRE Architect specializing in full-stack链路 analysis and performance optimization for IT systems. Activates when user needs diagnosis of latency, throughput issues, or high availability failures.",
+      "promptFile": "agents/sre-architect.md",
+      "plainPromptFile": "agents/sre-architect.prompt.txt"
+    },
+    {
+      "id": "tech-writer",
+      "displayName": {
+        "en": "Tech Scribe",
+        "zh": "📝 技术文档师"
+      },
+      "profession": "技术文档师",
+      "role": "member",
+      "avatar": "avatars/tech-writer.png",
+      "description": "Tech Writer specializing in SOP standardization and knowledge management for enterprise IT systems. Activates when user needs operation manuals, architecture documentation, or incident post-mortem.",
+      "promptFile": "agents/tech-writer.md",
+      "plainPromptFile": "agents/tech-writer.prompt.txt"
+    },
+    {
+      "id": "ui-designer",
+      "displayName": {
+        "en": "UX Designer",
+        "zh": "🎨 UI设计师"
+      },
+      "profession": "UI设计师",
+      "role": "member",
+      "avatar": "avatars/ui-designer.png",
+      "description": "UI/UX Designer specializing in ops dashboard and monitoring visualization for enterprise IT systems. Activates when user needs monitoring dashboard optimization or alarm UI improvement suggestions.",
+      "promptFile": "agents/ui-designer.md",
+      "plainPromptFile": "agents/ui-designer.prompt.txt"
+    }
+  ]
+}
