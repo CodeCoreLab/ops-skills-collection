@@ -5,9 +5,17 @@
 判据全部来自 references/ 原文，脚本不发明新规则。
 
 用法:
-    python regression-check-v420.py <skill_dir>
+    python regression-check-v420.py <skill_dir>       # 正常校验
+    python regression-check-v420.py --selftest-check <skill_dir>
+                                                      # 校验「校验器自身」是否可信
 
-退出码: 0 全过 / 1 有失败项
+退出码（三态，禁混淆）:
+    0 = 全部 PASS
+    1 = 有 FAIL（断言违约，即被校验内容不符合预期）
+    2 = ERROR（工具自身故障：必检文件缺失、读取失败等）
+        2026-11-24 修正：原实现把「文件缺失」也走 FAIL 通道，
+        于是「校验器坏了」和「内容不对」输出形态相同、退出码相同，
+        验收结论不可信（ERR-20261124-004）。现分离。
 """
 from __future__ import annotations
 
@@ -15,36 +23,68 @@ import re
 import sys
 from pathlib import Path
 
-FAILS: list[str] = []
 PASSES: list[str] = []
+FAILS: list[str] = []
+ERRORS: list[str] = []
+
+# 缺了任一项就无法判定内容正确性的文件（缺失即工具故障，不是断言失败）
+REQUIRED = [
+    "SKILL.md",
+    "references/debt-and-rules.md",
+    "references/workflow.md",
+    "references/output-template.md",
+    "references/regression-cases.md",
+    "references/archive/CHANGELOG.md",
+]
 
 
 def check(name: str, cond: bool, detail: str = "") -> None:
-    if cond:
-        PASSES.append(f"PASS  {name}")
-    else:
-        FAILS.append(f"FAIL  {name}  {detail}")
+    (PASSES if cond else FAILS).append(
+        f"{'PASS' if cond else 'FAIL'}  {name}  {detail}".rstrip()
+    )
 
 
-def read(p: Path) -> str:
-    return p.read_text(encoding="utf-8") if p.exists() else ""
+def error(msg: str) -> None:
+    ERRORS.append(f"ERROR  {msg}")
+
+
+def read(p: Path, required: bool = False) -> str:
+    """读文件。缺失时：required → 记 ERROR（工具故障）；否则返回空串（不参与断言）。
+
+    rr: 区分「工具坏了」与「内容不对」是验收可信的前提。
+    """
+    if not p.exists():
+        if required:
+            error(f"必检文件缺失：{p}")
+        return ""
+    try:
+        return p.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        error(f"必检文件读取失败：{p}（{exc}）")
+        return ""
 
 
 def main(skill: Path) -> int:
-    skill_md = read(skill / "SKILL.md")
-    debt = read(skill / "references" / "debt-and-rules.md")
-    workflow = read(skill / "references" / "workflow.md")
-    tmpl = read(skill / "references" / "output-template.md")
-    regress = read(skill / "references" / "regression-cases.md")
-    changelog = read(skill / "references" / "archive" / "CHANGELOG.md")
+    skill_md = read(skill / "SKILL.md", required=True)
+    debt = read(skill / "references" / "debt-and-rules.md", required=True)
+    workflow = read(skill / "references" / "workflow.md", required=True)
+    tmpl = read(skill / "references" / "output-template.md", required=True)
+    regress = read(skill / "references" / "regression-cases.md", required=True)
+    changelog = read(skill / "references" / "archive" / "CHANGELOG.md", required=True)
+
+    # 前置：必检文件不齐 → 立即 ERROR 退出，不进入断言（避免「空串导致全 FAIL」误判）
+    if ERRORS:
+        print("\n".join(ERRORS))
+        print(f"\n结果: ERROR（工具故障 {len(ERRORS)} 项，未执行断言）")
+        return 2
 
     # ---------- 版本一致性（版本号只允许出现在 frontmatter 与正文一行） ----------
     vers = set(re.findall(r"^\s*version:\s*(\d+\.\d+\.\d+)$", skill_md, re.M))
-    check("版本号 frontmatter 唯一且为 4.2.0", vers == {"4.2.0"}, f"found={vers}")
+    check("版本号 frontmatter 唯一且为 4.2.1", vers == {"4.2.1"}, f"found={vers}")
     check(
-        "正文版本行同步 4.2.0",
-        "当前 **v4.2.0**" in skill_md,
-        "未见「当前 **v4.2.0**」",
+        "正文版本行同步 4.2.1",
+        "当前 **v4.2.1**" in skill_md,
+        "未见「当前 **v4.2.1**」",
     )
 
     # ---------- 案例 10：impact 校准锚点（§7.1） ----------
@@ -192,17 +232,98 @@ def main(skill: Path) -> int:
         "头部仍写旧组数",
     )
 
+    check(
+        "§C 登记了三段式验收",
+        "三段式验收" in skill_md and "工具故障" in skill_md,
+    )
+    check(
+        "§C 登记了 selftest 用法",
+        "--selftest-check" in skill_md,
+    )
+    check(
+        "§C 登记了退出码三态",
+        "退出码三态" in skill_md and "工具故障，未执行断言" in skill_md,
+    )
+
     # ---------- 输出 ----------
+    for e in ERRORS:
+        print(e)
     print("\n".join(PASSES))
     if FAILS:
         print()
         print("\n".join(FAILS))
-        print(f"\n结果: {len(PASSES)} 通过 / {len(FAILS)} 失败")
+        print(f"\n结果: {len(PASSES)} 通过 / {len(FAILS)} 失败"
+              + (f" / {len(ERRORS)} 工具故障" if ERRORS else ""))
         return 1
     print(f"\n结果: 全部 {len(PASSES)} 项通过")
     return 0
 
 
+def selftest_check(skill: Path) -> int:
+    """校验「校验器自身」是否可信（三段式验收的第三段 · 工具故障必须可辨）。
+
+    2026-11-24 立，来源 ERR-20261124-004：校验器崩溃/工具故障与断言失败
+    在输出形态和退出码上必须可区分，否则验收结论不可信。
+
+    本函数校验三件事：
+      A. 必检文件缺失 → 退出码 2（ERROR），且不输出任何 PASS/FAIL
+         —— 证明「工具故障」不会被伪装成「断言失败」
+      B. 正常目录 → 退出码 0/1（PASS/FAIL），且无 ERROR 行
+         —— 证明干净路径不被工具故障污染
+      C. 取行类断言不得使用位置索引 split()[N]
+         —— 该类写法在目标行缺失时抛 IndexError（崩溃），而非报 FAIL
+
+    用法: python regression-check-v420.py --selftest-check <skill_dir>
+    """
+    import subprocess
+    import tempfile
+
+    me = Path(__file__).resolve()
+    ok = True
+
+    def verdict(name: str, cond: bool, detail: str = "") -> None:
+        nonlocal ok
+        if not cond:
+            ok = False
+            print(f"FAIL  {name}  {detail}")
+        else:
+            print(f"PASS  {name}")
+
+    # A. 必检文件缺失 → ERROR(2)，且 stdout 无 PASS/FAIL
+    with tempfile.TemporaryDirectory() as td:
+        r = subprocess.run(
+            [sys.executable, str(me), td],
+            capture_output=True, text=True, timeout=120,
+        )
+        verdict("A1 空目录 → 退出码 2（工具故障）", r.returncode == 2, f"got={r.returncode}")
+        verdict("A2 空目录 → 输出含 ERROR 行", "ERROR" in r.stdout, "未见 ERROR")
+        # A3 判据必须含「未崩溃」：若脚本抛异常，stdout 也没有 PASS/FAIL 行，
+        # 单看「无 PASS/FAIL」会让崩溃被误判为通过（2026-11-24 注入实测发现）。
+        crashed = "Traceback (most recent call last)" in r.stderr
+        verdict("A3 空目录 → 无 PASS/FAIL 行且未崩溃",
+                "PASS  " not in r.stdout and "FAIL  " not in r.stdout and not crashed,
+                "崩溃" if crashed else "把工具故障输出成了断言结果")
+
+    # B. 正常目录 → 0 或 1，且无 ERROR
+    r = subprocess.run(
+        [sys.executable, str(me), str(skill)],
+        capture_output=True, text=True, timeout=120,
+    )
+    verdict("B1 正常目录 → 退出码 ∈ {0,1}", r.returncode in (0, 1), f"got={r.returncode}")
+    verdict("B2 正常目录 → 无 ERROR 行", "ERROR" not in r.stdout, "干净路径出现工具故障")
+
+    # C. 静态检查：禁用位置索引取行
+    src = me.read_text(encoding="utf-8")
+    body = src.split('if __name__ == "__main__":')[0]
+    bad = re.findall(r"\.split\([^)]*\)\[\s*\d+\s*\]", body)
+    verdict("C1 无位置索引取行（split()[N]）", not bad, f"发现 {len(bad)} 处：{bad[:3]}")
+
+    print(f"\n自检结果: {'全部通过' if ok else '有失败项'}")
+    return 0 if ok else 1
+
+
 if __name__ == "__main__":
-    d = Path(sys.argv[1] if len(sys.argv) > 1 else ".")
-    sys.exit(main(d))
+    args = sys.argv[1:]
+    if args and args[0] == "--selftest-check":
+        sys.exit(selftest_check(Path(args[1] if len(args) > 1 else ".")))
+    sys.exit(main(Path(args[0] if args else ".")))

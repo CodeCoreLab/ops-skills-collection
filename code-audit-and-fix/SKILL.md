@@ -5,12 +5,12 @@ display_name_en: "Code Audit and Fix Hub"
 description: "一体化代码质量中枢（多文件/多模块级）：审计 + 分级修复 + 重构 + 依赖审计 + 架构评审 + 健康度量化 + 技术债治理 + 运维脚本审计。四层 × 40 项语言规则 × 24 项修复标签（噪声/冗余/重复/结构/可靠性）× 10 个修复动词 × 七维清单+并发专项 × P0/P1/P2/P3 四级分级 × 三态判定（确认/待验证/已否定）× 健康评分 1-10 + CAC/Bus Factor/DICE/ROI/7R/T-shirt 量化。触发：「代码审计」「全量审查」「技术债评估」「重构」「依赖审计」「架构评审」「健康度评分」「运维脚本审计」「上下游核验」「自动修复」「清理死代码」「消除重复」「处理审查意见」。**反触发（勿用本 skill）**：单文件/单函数的小改、纯查语法、只要一段代码的解释、以及自查性质的「帮我看看这段对不对」——直接改或用宿主 `CODE_REVIEW_CHECKLIST.md`。互斥边界：单 PR/单片段的 review 由用户显式调 `/code-review-router`（在 `skills/code-review-master/` 下，被设为 user-invocable-only，agent 无法自动加载）；整仓死代码批量清扫 `deadcode-scanner`（本技能 `dead_code` 标签只做审查范围内的标注+删除）；技术债专项治理 `tech-debt-manager`；纯安全专项**本机无独立 skill**，走本技能 `references/review-checklist.md` §3.4④。"
 description_zh: "一体化代码质量中枢：审计、分级修复、重构、依赖审计、架构评审、健康度量化、技术债治理与运维脚本审计。"
 description_en: "An all-in-one code quality hub: audit, tiered fixes, refactoring, dependency audit, architecture review, health scoring, tech-debt governance and ops script auditing."
-version: 4.2.0
+version: 4.2.1
 author: "马欣/码心AI"
 metadata:
   workbuddy:
     title: code-audit-and-fix
-    version: 4.2.0
+    version: 4.2.1
     summary: 一体化代码质量中枢（多文件/多模块级）。三阶段流程（阻断判定→并行深审 W1‖W2‖W3→优化报告）× P0 早停门 × 40 项语言规则 × 24 项修复标签 × 10 个修复动词 × 七维清单+并发专项（L1–L6 顺序视图）× P0-P3 四级分级 × 三态判定（确认/待验证/已否定）× 发现者/验证者分离 × 反合理化表 × 不报反清单 × 接收审查侧流程 × Conventional Comments × 健康评分 1-10 + CAC/Bus Factor/DICE/ROI/7R/T-shirt。入口只放门禁与导航，细则在 references/ 按档位加载。
 ---
 
@@ -104,6 +104,36 @@ metadata:
 
 改动 `SKILL.md` 或任一 `references/*.md` 前留快照，改后跑 `references/regression-cases.md` 的 **11 组**固定案例（早停门 / 证据门槛 / 分级呈现+PY-07 双模 / W3 自取证 / 形态模误报边界 / 标签-动词映射与自动修复边界 / 三态判定+发现者验证者分离 / 接收审查侧六步 / 验证计划可证伪 / impact 校准锚点 / 覆盖终态+指纹稳定），输出与预期一致才采纳；不一致先回滚再定位。
 
+### C1 机检脚本与三段式验收（2026-11-24 立）
+
+上面的 11 组案例是**agent 行为**验收，需要真实跑审查。**「机制是否写进权威源」由脚本验**：
+
+```bash
+# 第一段：正常校验（39 项）
+python references/regression-check-v420.py .
+# 结果：全部 39 项通过
+
+# 第二段：已知违例（改前打副本，注入违规后必须 FAIL）
+#   做法见下方「三段式」第 2 条
+
+# 第三段：校验器自身可信（6 项自检）
+python references/regression-check-v420.py --selftest-check .
+# 结果：自检结果: 全部通过
+```
+
+**三段式验收**（来源 `~/.workbuddy/rules/security.md §误报识别`，2026-11-24 补第三段）：
+
+| 段 | 验什么 | 判据 |
+|---|---|---|
+| 1 已知违例 | 断言真的会 FAIL | 注入违规 → 必须报 FAIL（不是 PASS、不是崩溃） |
+| 2 干净对照 | 断言不会误报 | 未改版本 → 必须全过 |
+| 3 **工具故障** | **校验器自身坏了要能区分** | 必检文件缺失/路径不存在 → **退出码 2 + ERROR 行**，且不得输出 PASS/FAIL |
+
+**为什么第三段不能省**（ERR-20261124-004 实证）：原脚本 `read()` 对缺失文件返回空串，于是「文件不存在」也走 FAIL 通道 —— 「校验器坏了」和「内容不对」输出形态相同、退出码相同，**验收结论不可信**。更隐蔽的一种：断言里用 `x.split("| 13 |")[1]` 这类位置索引，目标行缺失时抛 `IndexError` **崩溃**，`stdout` 里既没有 PASS 也没有 FAIL —— 只看「无 PASS/FAIL」的检查会把它误判为通过（本次注入实测踩到，已给 A3 判据补「且未崩溃」）。
+
+**退出码三态**（禁混淆）：`0` = 全过 · `1` = 有 FAIL（内容违约）· `2` = ERROR（工具故障，未执行断言）。
+
+
 ## D. 外部实践吸收登记（2026-10-27 立，v4.1 增补）
 
 | 来源 | 吸收内容 | 落点 |
@@ -124,7 +154,7 @@ metadata:
 
 ## 版本
 
-当前 **v4.2.0**（版本号只在此处 front matter 与本行出现，不再正文重复）。沿革见 `references/archive/CHANGELOG.md`。
+当前 **v4.2.1**（版本号只在此处 front matter 与本行出现，不再正文重复）。沿革见 `references/archive/CHANGELOG.md`。
 
 ## 详细参考
 
