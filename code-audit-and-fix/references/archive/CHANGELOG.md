@@ -1,8 +1,59 @@
-# 版本沿革（v1.0 → v3.8）
+# 版本沿革（v1.0 → v4.2）
 
 > 本文件由 `SKILL.md` 按需加载；`§N` 编号与原单文件版一致（对照表见 `SKILL.md`）。
 
 ## 版本
+
+- **v4.2.0**（2026-11-24）：二次吸收 Cloudflare security-audit-skill（**一手仓库核验**，非媒体转述；MIT，77431★，22 文件）
+  - **背景**：v4.0 已吸收其 5 条判据（finder≠verifier / 三态 / needs_validation 无严重度 / 纵深防御=加固 / 已否定留档）。本次读一手 SKILL.md + RECONNAISSANCE + HUNTING + VALIDATION-AND-REPORTING 全文后，发现 6 条**未落地**判据，且原「未吸收项」表述过宽（把「设施」与「判据」一起否掉）
+  - **新增 1 —— impact 校准锚点（`debt-and-rules.md §7.1`）**：原 §7 是「规则号 → 级别」机械映射，A04/缺最佳实践/解析器崩溃全判 P0，稀释阻断信号。新增 critical/high/medium/low/informational 五档锚点 + **high vs medium 唯一判别句**（完全击破 vs 只是削弱）+ 硬约束「级别不超已演示 impact」+ 「无锚点可落 → P3 加固建议」
+  - **新增 2 —— 指纹跨状态稳定（`workflow.md §1.4.1`）**：指纹 = 模块::根因形态::违反的不变量，**禁含行号/波次/agent/级别/verdict**。原 dedup 靠 `文件:行号`，一次重构或一次重分级即断链，已否定清单重复报
+  - **新增 3 —— 覆盖声称须由账本 + 独立 critic 位证明（`workflow.md §1.4.2`）**：覆盖结论须点回「检查项 × 实际 Read 路径 × 执行者」三项；**agent 数量不是证据**；无独立 critic 位则禁写「无遗留问题」
+  - **新增 4 —— 四终态（`workflow.md §1.4.3`）**：完整 ／ incomplete + 确切 reason，**缺口披露在首段**；禁审一半按完整口径写报告
+  - **新增 5 —— rejected 只压单条主张（`workflow.md §1.4.4`）**：被否定的主张 = 范围，不是文件 = 范围（已否定清单腐化成永久豁免清单是本机制最常见失效形态）
+  - **新增 6 —— 报告模板强制覆盖终态段（`output-template.md §9.2`）**：首段插入「覆盖终态与缺口」块 + 单条字段由六要素升七要素（加「指纹」）
+  - **落点**：`debt-and-rules.md §7.1`（新节 + 目录）· `workflow.md §1.4`（新节，四小节）· `workflow.md §1.1` 阶段 C 加 C4 覆盖自检 · `output-template.md §9.2`（覆盖终态段 + 七要素）· `SKILL.md §D` 登记 + 未吸收项表述收窄 · `regression-cases.md` 新增案例 10/11 + 汇总表升十一项 · `SKILL.md §C` 由「6 组」改「11 组」（原 6 组为 v3.x 遗留漏更新）
+  - **一手核验结论**：仓库存在性/star/license/文件数经 GitHub API 实测；六阶段与三 verdict 定义一手原文核实；媒体转述的「agent 上下文保持窗口 25% 以下」**一手文档 grep 无命中 → 不采信**；「单轮约一半」仅 README 自述 → 标数量级参考
+  - **仍不吸收**：artifact promotion 11 步（多租户 fleet + 完全不可信目标代码场景）· coverage-ledger 完整规范化（NFC + RFC3986 百分号编码 + 语义元组唯一性校验）· 多波 critic 循环 + quick/standard/deep 三档 + 总 agent 预算记账 · 9 篇专题攻击类分册全文
+  - **回归**：需跑 11 组（新增案例 10/11）；案例 10 验锚点表能否把「上游已拦的缺最佳实践」从 P0 降到 P3，案例 11 验无 critic 位时报告是否拒绝声称「已全面审查」
+- **v4.1.0**（2026-11-23）：吸收 lemon-bug-analyser（公众号「小檬姐精测」2026-11-21 拆解的开源 Bug 分析 Skill）
+  - **吸收内容**：验证计划可证伪——P0/P1 候选验证前必须写 prediction + pass_if/fail_if 三字段（只有 pass_if = 找一个能证明自己的样本，不算验证）；inconclusive 第三态——验证执行后该采的字段没采到（时间窗错位/抓包缺 trace id/环境不匹配）必须停住等补采，禁止模糊成"疑似"或无声降级
+  - **落点**：`workflow.md §1.2` 新增「验证计划可证伪（inconclusive 停住）」条目，与 needs_validation/三态判定衔接；`regression-cases.md` 新增案例 9；`SKILL.md §D` 登记来源
+  - **有意不吸收**：五级事实分级（宿主三态判定+置信度已覆盖同语义，五级会双写）；20 分制评分表（报告模板已有分级呈现，评分维度与现有 C2 技术债量化重叠）；知识库权重表（本技能无案例库机制，E0 相似案例回流属 alert-core 职责）
+- **v4.0.0**（2026-10-27）：吸收 7 个外部代码审查实践，架构补全「接收审查侧」与「三态判定」两个结构性缺口
+  - **来源核实**（全部实测核实，非凭印象吸收）：
+    - `alibaba/open-code-review`：项目存在（815 commits）；**星数未验证**（GitHub 页面无星数数据，48.4k 说法不可证）；无成文「精度优先原则」，但有明确 precision-over-noise 取舍声明（"a deliberate trade-off favoring precision over noise"）；**「不报反清单」原文未找到**——本技能按 precision 口径自建反清单并标注推导来源，不冒称引用
+    - `alibaba/loongcollector` code-review skill：防假阳性三原则**原文核实**（充分上下文/实际读取/先意图后判断）；review-plan 勾选清单**原文核实**（大项+子项拆分、逐步勾选、中断先改计划）；并发与生命周期评估组**原文核实**（锁顺序/资源释放闭环/状态恢复）；注意其 security-check skill 已于 2026-06-30 被 PR #2622 删除
+    - Java 手册黄山版：安全规约**原文核实 11 条**（10 强制+1 推荐，GitHub calvingit/skills 收录原文）；规约三级【强制】【推荐】【参考】核实
+    - Cloudflare `security-audit-skill`：finder≠verifier（"The agent that checks a finding is never the agent that found it"）· 三 verdict（confirmed 完整源码追溯+有界观察 / needs_validation 精确未决事实+**无严重度** / rejected 证伪留档）· 纵深防御缺口=加固建议非漏洞
+    - `trailofbits/skills` differential-review：反合理化表 7 条原文核实（"Small PR, quick review"→"Heartbleed was 2 lines" 等）；风险分级触发器（HIGH: auth/crypto/external calls/value transfer/validation removal）
+    - Anthropic Claude Code review pipeline（2026-10-15 工程博客）：fresh-context subagent 审 diff · verifier 组投票仅发共识发现 · Important/Nit/**Pre-existing** 三级 · 收敛失控案例（50+ 轮）与解法（3 轮上限/diff-only 复审/报类不报行/59% 重复标记指向首审即有代码）
+    - obra/superpowers `receiving-code-review`：六步流程（READ→UNDERSTAND→VERIFY→EVALUATE→RESPOND→IMPLEMENT）· 反表演性附和 · YAGNI 核验（"正规实现"建议先 grep 调用方）
+  - **结构性补全 1 —— 接收审查侧**（此前完全缺失的一侧）：
+    - 新增 `workflow.md §1.5`：六步流程 + 六类分诊表（事实错误/真缺陷/宿主规则冲突/正规实现类/模糊意见/超范围）+ 与三态判定的双向闭环
+    - 新增 `SKILL.md B7 意见处理门禁`：先核验后行动 / 采纳反驳都有出口 / 模糊先问 / YAGNI 核验 / 不扩范围
+    - 新增档位「意见处理」；新增回归案例 8
+  - **结构性补全 2 —— 三态判定**（取代单一「待验证假设」标注）：
+    - `workflow.md §1.3`：确认（完整源码追溯+有界观察）/ 待验证（精确疑点，**不给 P0/P1**）/ 已否定（证伪留档，防下轮重复报）三态表
+    - 已否定不静默丢弃：报告新增「已否定候选」清单（output-template §9.2）；被否定的「安全缺口」必查纵深防御 → 记加固建议不记漏洞
+    - 新增 `workflow.md §1.2` 发现者/验证者分离：P0/P1 候选由独立上下文证伪式复核（子代理优先，单会话时清空推理链重走并声明上下文边界）；未执行复核的 P0 只能标「待复核」
+    - 新增回归案例 7（三态判定 + 分离声明）
+  - **精度治理**：
+    - 新增 `review-checklist.md §3.0.2 不报反清单`：7 类默认不报项（纯格式/无缺陷品味/未测量的性能担忧/Pre-existing/不可达边界/YAGNI 新抽象/文档措辞），每项带例外条件；反清单维护机制（同类意见被驳回 ≥3 次进项目级反清单，落宿主清单）
+    - 新增 `§3.0.3 防假阳性三原则`（loongcollector 原文）
+    - 新增 `workflow.md §1.3` 增量审查去重：Pre-existing 单列分组 + 前轮已报未改问题不重复上报
+  - **审查纪律**：
+    - 新增 `review-checklist.md §3.0 反合理化表`（trailofbits 7 条原文）+ §3.0.1 风险分级触发器 + 代码库规模三档策略
+    - 新增 `workflow.md` 审查收敛控制：3 轮上限 / diff-only 复审 / 报类不报行 / 收敛门（连续 2 轮无新增 P0/P1）/ 审查意见本身接受复审
+    - 新增 fresh-context 原则：审查者上下文独立于实现者上下文；汇聚者只读结论清单不回读推理链
+  - **规则扩充（不破闭集）**：
+    - `review-checklist.md §3.4` 新增 **⑧ 并发与生命周期**（overlay 维度，不改七维称谓与 L1-L6 视图）：锁顺序跨模块一致 / 资源释放闭环四路径 / 状态恢复正确性 / 生命周期 verdict 三态
+    - `§3.4④` 安全补充检查并入黄山版安全规约 11 条（敏感数据脱敏/文件上传/防重放/CSRF/水平越权/URL 白名单/参数校验/配置密码加密）
+    - `§3.4⑤` 并入远程调用超时（黄山版强制 1）与慢服务隔离线程池；`L3`/`② 架构原则` 并入弱依赖降级预案（黄山版设计规约强制 7）
+    - 新增 `§3.5 规约三级映射`：黄山版【强制】【推荐】【参考】→ P0/P1 · P2 · P3（只映方向，不为黄山版新增语言规则号，§6 维持 40 项闭集）
+  - **报告升级**（output-template §9.2）：三态统计行 / Pre-existing 分组 / 已否定候选表 / 生命周期 verdict（后置核验段）/ 发现者-验证者分离声明
+  - **SKILL.md**：版本 4.0.0；执行流程新增阶段 E（意见处理）；门禁 B1 升级（三态+分离）；新增 B7；档位表加「意见处理」；新增 §D 外部实践吸收登记表（含**未吸收项**及理由：open-code-review 确定性管道 / Cloudflare sandbox+coverage-ledger / superpowers subagent 编排）
+  - **口径约束**：所有吸收内容标注来源与日期；48.4k 星数等不可证数据不写入正文；「不报反清单」标注为按 precision 口径自建而非原文引用
 
 - **v1.0**（2026-07-21）：初版，38 项规则 + 三路分发 + 双引擎 + 四级分级
 - **v2.0**（2026-09-10）：四层结构 + 依赖/架构/技术债增强 + 上下游核验
